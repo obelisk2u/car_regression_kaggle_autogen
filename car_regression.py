@@ -51,14 +51,8 @@ config_list_writer = [
 	'model':'gpt-3.5-turbo',
     }
 ]
-"""
-llm_config={
-    "seed": 45, 
-    "config_list": config_list_executor,
-    "temperature": 0
-}
-"""
-#================================================================================
+
+#===============================================================================
 
 code_executor_agent = ConversableAgent(
     "code_executor_agent",
@@ -88,5 +82,5 @@ code_writer_agent = ConversableAgent(
 
 chat_result=code_executor_agent.initiate_chat(
     code_writer_agent,
-    message="solve the Kaggle Titanic Competition and save all code written to your working directory"
+    message="Use regression techniques to predict the price of used cars based on various attributes. Submissions are scored on the root mean squared error. For each id in the test set found in test_car.csv, you must predict the price of the car. Save all code you write to your working directory. Use train_car.csv in your working directory as your training data. Save the subission file to your working directory as a csv file with the name submission.csv"
 )

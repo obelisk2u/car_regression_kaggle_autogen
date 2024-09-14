@@ -1,0 +1,60 @@
+# Load the necessary libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+
+# Load the training data
+train_data = pd.read_csv('train_car.csv')
+
+# Handle unknown categories in the 'engine' column
+train_data['engine'] = train_data['engine'].str.replace('allroad 2.7T', 'Unknown')
+
+# Verify the presence of the 'price' column in the training data
+if 'price' in train_data.columns:
+    # Split the data into features and target variable
+    X = train_data.drop(columns=['price'])
+    y = train_data['price']
+
+    # Preprocess categorical columns with unknown handling
+    categorical_cols = ['brand', 'model', 'fuel_type', 'transmission', 'ext_col', 'int_col', 'accident', 'clean_title']
+    categorical_transformer = ColumnTransformer(transformers=[('encoder', OneHotEncoder(handle_unknown='ignore'), categorical_cols)], remainder='passthrough')
+
+    # Impute missing values in numerical columns
+    numerical_cols = [col for col in X.columns if train_data[col].dtype in [np.float64, np.int64]]
+    numerical_transformer = SimpleImputer(strategy='mean')
+
+    preprocessor = ColumnTransformer(transformers=[('cat', categorical_transformer, categorical_cols), ('num', numerical_transformer, numerical_cols)])
+
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Train the model
+    model = LinearRegression()
+    model.fit(preprocessor.fit_transform(X_train), y_train)
+
+    # Make predictions on the test set
+    predictions = model.predict(preprocessor.transform(X_test))
+
+    # Calculate the root mean squared error
+    rmse = np.sqrt(mean_squared_error(y_test, predictions))
+    print('Root Mean Squared Error:', rmse)
+
+    # Load the test data
+    test_data = pd.read_csv('test_car.csv')
+
+    # Handle unknown categories in the 'engine' column for test data
+    test_data['engine'] = test_data['engine'].str.replace('allroad 2.7T', 'Unknown')
+
+    # Make predictions on the test data
+    test_predictions = model.predict(preprocessor.transform(test_data))
+
+    # Create a submission file
+    submission = pd.DataFrame({'Id': test_data['id'], 'Price': test_predictions})
+    submission.to_csv('submission.csv', index=False)
+else:
+    print("Error: 'price' column not found in the training data. Please check the column names.")
